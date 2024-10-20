@@ -1,6 +1,7 @@
 const axios = require('axios');
 const { sendMessage } = require('../handles/sendMessage');
 const fs = require('fs');
+const path = require('path');
 
 const token = fs.readFileSync('token.txt', 'utf8');
 
@@ -21,18 +22,29 @@ module.exports = {
     const apiUrl = `https://betadash-search-download.vercel.app/sc?search=${encodeURIComponent(query)}`;
 
     try {
-      const { data } = await axios.get(apiUrl);
+      const response = await axios.get(apiUrl, { responseType: 'arraybuffer' });
+      
+      if (response && response.data) {
+        // Create a temporary file path for the audio
+        const audioPath = path.resolve(__dirname, `../temp/${query}.mp3`);
+        fs.writeFileSync(audioPath, response.data);
 
-      if (data && data.play) {
         // Send the caption first
         await sendMessage(senderId, { text: `🎵 Now playing: ${query}` }, pageAccessToken);
 
-        // Send the audio separately
+        // Send the audio file as an attachment
         await sendMessage(senderId, {
-          audio: {
-            url: data.play,
+          attachment: {
+            type: 'audio',
+            payload: {
+              is_reusable: true,
+              url: audioPath,
+            },
           },
         }, pageAccessToken);
+
+        // Delete the temporary file after sending
+        fs.unlinkSync(audioPath);
       } else {
         await sendMessage(senderId, { text: 'Error: Unable to find or play the track.' }, pageAccessToken);
       }
