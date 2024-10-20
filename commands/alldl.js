@@ -3,7 +3,7 @@ const { sendMessage } = require('../handles/sendMessage');
 
 module.exports = {
   name: 'alldl',
-  description: 'Download videos from Fàcebook, Instàgram, and TíkTok using their link',
+  description: 'Download videos from Fàcebook, Instàgram, TíkTok, and YóuTube using their link',
   usage: '-alldl <link>',
   author: 'coffee',
   async execute(senderId, args, pageAccessToken) {
@@ -25,6 +25,20 @@ module.exports = {
           await sendMessage(senderId, { attachment: { type: 'video', payload: { url: videoUrl } } }, pageAccessToken);
         } else {
           await sendMessage(senderId, { text: 'Error: Unable to fetch TikTok video. Please try again later.' }, pageAccessToken);
+        }
+        return;
+      }
+
+      if (url.includes('youtube.com') || url.includes('youtu.be')) {
+        // YouTube
+        const apiUrl = `https://betadash-search-download.vercel.app/ytdl?url=${encodeURIComponent(url)}`;
+        const response = await axios.get(apiUrl);
+
+        if (response.data && response.data.status === 'stream') {
+          const videoUrl = response.data.url;
+          await sendMessage(senderId, { attachment: { type: 'video', payload: { url: videoUrl } } }, pageAccessToken);
+        } else {
+          await sendMessage(senderId, { text: 'Error: Unable to fetch YouTube video. Please try again later.' }, pageAccessToken);
         }
         return;
       }
