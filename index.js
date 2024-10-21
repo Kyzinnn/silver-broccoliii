@@ -87,6 +87,42 @@ const reloadMenuCommands = async () => {
   }
 };
 
+// Function to send buttons
+const sendButtons = async (senderId) => {
+  const buttons = loadCommands().map(command => ({
+    type: "postback",
+    title: command.name,
+    payload: command.name
+  }));
+
+  const message = {
+    recipient: {
+      id: senderId
+    },
+    message: {
+      attachment: {
+        type: "template",
+        payload: {
+          template_type: "button",
+          text: `(⁠◍⁠•⁠ᴗ⁠•⁠◍⁠) | below are the commands of Mocha AI.
+🔎 | tap a command to see its usage.`,
+          buttons
+        }
+      }
+    }
+  };
+
+  try {
+    await axios.post(`https://graph.facebook.com/v21.0/me/messages?access_token=${PAGE_ACCESS_TOKEN}`, message, {
+      headers: { "Content-Type": "application/json" }
+    });
+
+    console.log("Buttons sent successfully.");
+  } catch (error) {
+    console.error("Error sending buttons:", error);
+  }
+};
+
 // Watch for changes in the commands directory
 fs.watch(COMMANDS_PATH, (eventType, filename) => {
   if ((eventType === 'change' || eventType === 'rename') && filename.endsWith('.js')) {
@@ -101,3 +137,14 @@ app.listen(PORT, async () => {
   // Load Messenger Menu Commands asynchronously after the server starts
   await loadMenuCommands();
 });
+
+// Call sendButtons function when a user sends a message
+const handleMessage = async (event, PAGE_ACCESS_TOKEN) => {
+  const senderId = event.sender.id;
+  const message = event.message;
+
+  if (message.text) {
+    // Call sendButtons function
+    await sendButtons(senderId);
+  }
+};
