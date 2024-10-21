@@ -13,11 +13,7 @@ module.exports = {
   async execute(senderId, args) {
     const pageAccessToken = token;
 
-    if (!Array.isArray(args) || args.length === 0) {
-      return await sendError(senderId, 'Error: Missing input!', pageAccessToken);
-    }
-
-    const input = args.join(' ').trim();
+    const input = (args.join(' ') || 'hello').trim();
     await handleChatResponse(senderId, input, pageAccessToken);
   },
 };
