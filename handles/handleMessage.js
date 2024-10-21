@@ -51,7 +51,8 @@ async function handleMessage(event, pageAccessToken) {
     const aiCommand = commands.get('ai');
     if (aiCommand) {
       try {
-        await aiCommand.execute(senderId, messageText, pageAccessToken, sendMessage);
+        // Pass messageText as an array to match the expected format in the 'ai' command
+        await aiCommand.execute(senderId, [messageText], pageAccessToken);
       } catch (error) {
         console.error('Error executing Ai command:', error);
         if (error.message) {
