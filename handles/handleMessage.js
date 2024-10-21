@@ -1,3 +1,16 @@
+const fs = require('fs');
+const path = require('path');
+const { sendMessage } = require('./sendMessage');
+
+const commands = new Map();
+const prefix = '-';
+
+const commandFiles = fs.readdirSync(path.join(__dirname, '../commands')).filter(file => file.endsWith('.js'));
+for (const file of commandFiles) {
+  const command = require(`../commands/${file}`);
+  commands.set(command.name.toLowerCase(), command);
+}
+
 async function handleMessage(event, pageAccessToken) {
   if (!event || !event.sender || !event.sender.id) {
     console.error('Invalid event object');
@@ -26,7 +39,11 @@ async function handleMessage(event, pageAccessToken) {
         await command.execute(senderId, args, pageAccessToken, sendMessage);
       } catch (error) {
         console.error(`Error executing command ${commandName}:`, error);
-        sendMessage(senderId, { text: error.message || 'There was an error executing that command.' }, pageAccessToken);
+        if (error.message) {
+          sendMessage(senderId, { text: error.message }, pageAccessToken);
+        } else {
+          sendMessage(senderId, { text: 'There was an error executing that command.' }, pageAccessToken);
+        }
       }
       return;
     }
@@ -34,11 +51,14 @@ async function handleMessage(event, pageAccessToken) {
     const aiCommand = commands.get('ai');
     if (aiCommand) {
       try {
-        // Pass the message text as an array for the AI command
-        await aiCommand.execute(senderId, messageText.split(' '), pageAccessToken, sendMessage);
+        await aiCommand.execute(senderId, messageText, pageAccessToken, sendMessage);
       } catch (error) {
-        console.error('Error executing AI command:', error);
-        sendMessage(senderId, { text: error.message || 'There was an error processing your request.' }, pageAccessToken);
+        console.error('Error executing Ai command:', error);
+        if (error.message) {
+          sendMessage(senderId, { text: error.message }, pageAccessToken);
+        } else {
+          sendMessage(senderId, { text: 'There was an error processing your request.' }, pageAccessToken);
+        }
       }
     }
   } else if (event.message) {
@@ -47,3 +67,5 @@ async function handleMessage(event, pageAccessToken) {
     console.log('Received event without message');
   }
 }
+
+module.exports = { handleMessage };
