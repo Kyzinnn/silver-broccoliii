@@ -19,7 +19,9 @@ module.exports = {
 };
 
 const handleChatResponse = async (senderId, input, pageAccessToken) => {
-  const apiUrl = `https://joshweb.click/gpt4?prompt=${encodeURIComponent(input)}&uid=${senderId}`;
+  const systemRole = 'you are Mocha AI. an AI assistant.';
+  const prompt = `${systemRole}\n${input}`;
+  const apiUrl = `https://joshweb.click/gpt4?prompt=${encodeURIComponent(prompt)}&uid=${senderId}`;
 
   try {
     const { data } = await axios.get(apiUrl);
